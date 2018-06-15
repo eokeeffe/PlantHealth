@@ -4,10 +4,12 @@ from matplotlib import pyplot
 #import numpy
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 import numpy as np
 import cv2
 from PIL import Image
 from math import sqrt
+import sys, os
 
 def savi(img,imageOutPath):
     '''
@@ -20,13 +22,13 @@ def savi(img,imageOutPath):
     arrR=np.asarray(red).astype('float64')
     arrG=np.asarray(green).astype('float64')
     arrB=np.asarray(blue).astype('float64')
-    
+
     L = 0.5
-    
+
     num=((arrR-arrB)*(1+L))
     denom=(arrR+arrB+L)
     arr_savi=num/denom
-    
+
     fig=plt.figure()
     fig.set_frameon(False)
     ax=fig.add_subplot(111)
@@ -51,9 +53,9 @@ def savi2(img,imageOutPath):
     arrR=np.asarray(red).astype('float64')
     arrG=np.asarray(green).astype('float64')
     arrB=np.asarray(blue).astype('float64')
-    
+
     arr_savi2=arrR+0.5-np.sqrt(np.power((arrR+0.5),2)-2*(arrR-arrB))
-    
+
     fig=plt.figure()
     fig.set_frameon(False)
     ax=fig.add_subplot(111)
@@ -78,11 +80,11 @@ def rdvi(img,imageOutPath):
     arrR=np.asarray(red).astype('float64')
     arrG=np.asarray(green).astype('float64')
     arrB=np.asarray(blue).astype('float64')
-    
+
     num=(arrR - arrB)
     denom=(np.sqrt(arrR+arrB))
     arr_rdvi=num/denom
-    
+
     fig=plt.figure()
     fig.set_frameon(False)
     ax=fig.add_subplot(111)
@@ -107,14 +109,14 @@ def msr(img,imageOutPath):
     arrR=np.asarray(red).astype('float64')
     arrG=np.asarray(green).astype('float64')
     arrB=np.asarray(blue).astype('float64')
-    
+
     num=(arrR - arrB)
     denom=(arrR + arrB)
     arr_ndvi=num/denom
-    
+
     sr = (1+arr_ndvi)/(1-arr_ndvi)
     msr = (sr-1)/np.sqrt(sr+1)
-    
+
     fig=plt.figure()
     fig.set_frameon(False)
     ax=fig.add_subplot(111)
@@ -139,9 +141,9 @@ def sr(img,imageOutPath):
     arrR=np.asarray(red).astype('float64')
     arrG=np.asarray(green).astype('float64')
     arrB=np.asarray(blue).astype('float64')
-    
+
     arr_sr=(arrR/arrB)
-    
+
     fig=plt.figure()
     fig.set_frameon(False)
     ax=fig.add_subplot(111)
@@ -166,11 +168,11 @@ def endvi(img,imageOutPath):
     arrR=np.asarray(red).astype('float64')
     arrG=np.asarray(green).astype('float64')
     arrB=np.asarray(blue).astype('float64')
-    
+
     num = ((arrR+arrG)-(2*arrB))
     denom = ((arrR+arrG)+(2*arrB))
     arr_endvi=num/denom
-    
+
     fig=plt.figure()
     fig.set_frameon(False)
     ax=fig.add_subplot(111)
@@ -188,8 +190,8 @@ def bvdrvi(img,imageOutPath):
     '''
         Normalized difference vegetation index
     '''
-    #img1 = Image.open(imageInPath) 
-    
+    #img1 = Image.open(imageInPath)
+
     red=img[:,:,0]
     green=img[:,:,1]
     blue=img[:,:,2]
@@ -202,7 +204,7 @@ def bvdrvi(img,imageOutPath):
     num=0.1*(arrR - arrB)
     denom=0.1*(arrR + arrB)
     arr_bvdrvi=num/denom
-    
+
     fig=plt.figure()
     fig.set_frameon(False)
     ax=fig.add_subplot(111)
@@ -220,8 +222,8 @@ def ndvi(img,imageOutPath):
     '''
         Normalized difference vegetation index
     '''
-    #img1 = Image.open(imageInPath) 
-    
+    #img1 = Image.open(imageInPath)
+
     red=img[:,:,0]
     green=img[:,:,1]
     blue=img[:,:,2]
@@ -234,7 +236,7 @@ def ndvi(img,imageOutPath):
     num=(arrR - arrB)
     denom=(arrR + arrB)
     arr_ndvi=num/denom
-    
+
     fig=plt.figure()
     fig.set_frameon(False)
     ax=fig.add_subplot(111)
@@ -246,7 +248,8 @@ def ndvi(img,imageOutPath):
     #ndvi_plot = ax.imshow(arr_ndvi, cmap=custom_cmap, interpolation="nearest")
 
     fig.colorbar(ndvi_plot)
-    fig.savefig(imageOutPath)
+    #fig.savefig(imageOutPath)
+    return fig
 
 def nir(img,imageOutPath):
     '''
@@ -254,7 +257,7 @@ def nir(img,imageOutPath):
     '''
     red=img[:,:,0]
     arrR=np.asarray(red).astype('float64')
-   
+
     arr_nir=arrR
 
     fig=plt.figure()
@@ -268,16 +271,23 @@ def nir(img,imageOutPath):
     #fig.colorbar(nir_plot)
     fig.savefig(imageOutPath)
 
-
+def processVideo(videoFile):
+    cap = cv2.VideoCapture(videoFile)
+    Writer = animation.writers['ffmpeg']
+    writer = Writer(fps=30, metadata=dict(title='Movie Test', artist='EvanOKeeffe',comment='NDVI of invasive species lough corrib'), bitrate=1800)
     
-#img = mpimg.imread("imagefile.jpg")
-img = cv2.imread("imagefile.jpg")
-ndvi(img,"ndvi.jpg")
-rdvi(img,"rdvi.jpg")
-bvdrvi(img,"bvdrvi.jpg")
-savi(img,"savi.jpg")
-savi2(img,"savi2.jpg")
-endvi(img,"endvi.jpg")
-msr(img,"msr.jpg")
-sr(img,"sr.jpg")
-nir(img,"nir.jpg")
+    count=0
+    while(cap.isOpened()):
+        ret,frame = cap.read()
+        fig = nir(frame,"ndvi"+str(count)+".jpg")
+	    
+        if cv2.waitKey(1) & 0xFF==ord('q'):
+            break
+    print "Processing complete"
+
+if __name__=='__main__':
+    processVideo(sys.argv[1])
+    #img = mpimg.imread("imagefile.jpg")
+    #img = cv2.imread("imagefile.jpg")
+    #ndvi(img,"ndvi.jpg")
+    #nir(img,"nir.jpg")
